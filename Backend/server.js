@@ -58,7 +58,7 @@ fastify.get("/", (req, reply) => {
 // routes
 fastify.register(userRoutes, { prefix: '/api/users' })
 fastify.register(deviceRoutes, { prefix: '/api/devices' })
-//fastify.register(authRoutes)
+fastify.register(authRoutes, { prefix: '/api/auth' })
 
 // set port, listen for requests
 const PORT = process.env.PORT || 8030

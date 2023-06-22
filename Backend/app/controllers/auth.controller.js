@@ -5,71 +5,15 @@ const RefreshToken = require("../models/refreshToken.model")
 var jwt = require("jsonwebtoken")
 var bcrypt = require("bcryptjs")
 
-exports.signup = (req, reply) => {
-    const user = new User({
-        name: req.body.name,
-        email: req.body.email,
-        password: bcrypt.hashSync(req.body.password, 8),
-        rut: req.body.rut,
-        position: req.body.position
-    })
-    user.save((err, user) => {
-        if (err) {
-            reply.status(500).send({ message: err })
-            return
-        }
-        if (req.body.roles) {
-            Role.find(
-                {
-                	name: { $in: req.body.roles }
-                },
-                (err, roles) => {
-                    if (err) {
-                        reply.status(500).send({ message: err })
-                        return
-                    }
-                    user.roles = roles.map(role => role._id)
-                    user.save(err => {
-                        if (err) {
-                            reply.status(500).send({ message: err })
-                            return
-                        }
-                        reply.send({ message: "User was registered successfully!" })
-                    })
-                }
-            )
-        } else {
-            Role.findOne({ name: "user" }, (err, role) => {
-                if (err) {
-                    reply.status(500).send({ message: err })
-                    return
-                }
-                user.roles = [role._id]
-                user.save(err => {
-                    if (err) {
-                        reply.status(500).send({ message: err })
-                        return
-                    }
-                    reply.send({ message: "User was registered successfully!" })
-                })
-            })
-        }
-    })
-}
-
-exports.signin = (req, reply) => {
-	User.findOne({
-		email: req.body.email
-	}).populate("roles", "-__v").exec(async (err, user) => {
-		if (err) {
-			res.status(500).send({ message: err })
-			return
-		}
+async function signin(request, reply) {
+	try {
+		const userEmail = request.body.email
+		const user = await User.findOne({ email: userEmail }).populate("roles", "-__v")
 		if (!user) {
-			return reply.status(404).send({ message: "User Not found." });
+			return reply.status(404).send({ message: 'User Not found' })
 		}
 		let passwordIsValid = bcrypt.compareSync(
-			req.body.password,
+			request.body.password,
 			user.password
 		)
 		if (!passwordIsValid) {
@@ -84,9 +28,9 @@ exports.signin = (req, reply) => {
 		let refreshToken = await RefreshToken.createToken(user)
 		let authorities = []
 		for (let i = 0; i < user.roles.length; i++) {
-			authorities.push("ROLE_" + user.roles[i].name.toUpperCase());
+			authorities.push("ROLE_" + user.roles[i].name.toUpperCase())
 		}
-		res.status(200).send({
+		reply.status(200).send({
 			id: user._id,
 			name: user.name,
 			email: user.email,
@@ -94,10 +38,12 @@ exports.signin = (req, reply) => {
 			accessToken: token,
 			refreshToken: refreshToken,
 		})
-	})
+	} catch (error) {
+		reply.status(500).send(error)
+	}
 }
 
-exports.refreshToken = async (req, reply) => {
+async function refreshToken (req, reply) {
 	const { refreshToken: requestToken } = req.body
 	if (requestToken == null) {
 		return reply.status(403).json({ message: "Refresh Token is required!" });
@@ -125,4 +71,9 @@ exports.refreshToken = async (req, reply) => {
 	} catch (err) {
 		return reply.status(500).send({ message: err })
 	}
+}
+
+module.exports = {
+	signin,
+	refreshToken
 }
