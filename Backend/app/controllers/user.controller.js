@@ -8,7 +8,7 @@ async function getUsers(request, reply) {
         const users = await User.find().populate('roles')
         reply.status(200).send(users)
     } catch (error) {
-        reply.status(500).send('Server error')
+        reply.status(500).send(error)
     }
 }
 
@@ -23,7 +23,7 @@ async function getUserById(request, reply) {
         }
         reply.status(200).send(user)
     } catch (error) {
-        reply.status(500).send('Server error')
+        reply.status(500).send(error)
     }
 }
 
@@ -43,10 +43,17 @@ async function createUser(request, reply) {
             rut,
             position,
         })
-        await user.save() //try and catch. async function and await
+        if (request.body.roles) {
+            const roles = await Role.find({ name: { $in: request.body.roles }})
+            user.roles = roles.map(role => role._id)
+        } else {
+            const role = await Role.findOne({ name: "user" })
+            user.roles = [role._id]
+        }
+        await user.save()
         reply.status(201).send(user)
     } catch (error) {
-        reply.status(500).send('Server error')
+        reply.status(500).send(error)
     }
 }
 
@@ -63,7 +70,7 @@ async function updateUser(request, reply) {
         const userToUpdate = await User.findById(userId)
         reply.status(200).send(userToUpdate)
     } catch (error) {
-        reply.status(500).send('Server error')
+        reply.status(500).send(error)
     }
 }
 
@@ -78,33 +85,38 @@ async function deleteUser(request, reply) {
         }
         reply.status(200).send('User deleted successfully')
     } catch (error) {
-        reply.status(500).send('Server error')
+        reply.status(500).send(error)
     }
 }
 
+// Get a list of users that contain the name/email/rut searched
 async function searchUsers(request, reply) {
     try {
-        const { name } = request.query
-        const users = await User.find({ name: { $regex: name, $options: 'i' } }).populate('roles')
-        reply.send(users)
+        var nameRegex = {"$regex": new RegExp('^' + request.params.name.toLowerCase(),  'i')}
+        const users = await User.find({$or: [
+            { name: nameRegex },
+            { email: nameRegex },
+            { rut: nameRegex }
+        ]})
+        reply.status(200).send(users)
     } catch (error) {
-        reply.status(500).send('Server error')
+        reply.status(500).send(error)
     }
 }
 
+// Change the state of an existing user
 async function updateUserState(request, reply) {
     try {
-        const user = await User.findById(request.params.id)
+        const userId = request.params.id
+        const user = await User.findByIdAndUpdate(userId, [{$set:{state:{$eq:[false,"$state"]}}}])
     if (!user) {
         reply.status(404).send('User not found')
         return
     }
-    const { state } = request.body
-    user.state = state
-    await user.save()
-    reply.send(user)
+    const userToUpdate = await User.findById(userId)
+    reply.status(200).send(userToUpdate)
     } catch (error) {
-        reply.status(500).send('Server error')
+        reply.status(500).send(error)
     }
 }
   

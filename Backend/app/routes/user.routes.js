@@ -7,7 +7,7 @@ async function userRoutes(fastify, options) {
     fastify.post('/', { schema: userSchema.createSchema }, userController.createUser)
     fastify.put('/:id', { schema: userSchema.updateSchema }, userController.updateUser)
     fastify.delete('/:id', userController.deleteUser)
-    fastify.get('/search', userController.searchUsers)
+    fastify.get('/search/:name', userController.searchUsers)
     fastify.put('/:id/state', userController.updateUserState)
 }
 
