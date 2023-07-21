@@ -18,7 +18,7 @@ Project is created with:
 To run this project, install it locally using npm:
 
 ```
-$ cd ../Backend
+$ cd Backend
 $ npm install
 $ npm start
 ```
