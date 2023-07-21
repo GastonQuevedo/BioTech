@@ -1,4 +1,3 @@
-const config = require("../config/auth.config")
 const User = require("../models/user.model")
 const Role = require("../models/role.model")
 const RefreshToken = require("../models/refreshToken.model")
@@ -22,8 +21,8 @@ async function signin(request, reply) {
 				message: "Invalid Password!"
 			})
 		}
-		let token = jwt.sign({ id: user.id }, config.secret, {
-			expiresIn: config.jwtExpiration
+		let token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, {
+			expiresIn: process.env.JWT_EXPIRATION
 		})
 		let refreshToken = await RefreshToken.createToken(user)
 		let authorities = []
@@ -61,8 +60,8 @@ async function refreshToken (req, reply) {
 			})
 			return
 		}
-		let newAccessToken = jwt.sign({ id: refreshToken.user._id }, config.secret, {
-			expiresIn: config.jwtExpiration,
+		let newAccessToken = jwt.sign({ id: refreshToken.user._id }, process.env.JWT_SECRET, {
+			expiresIn: process.env.JWT_EXPIRATION,
 		})
 		return reply.status(200).json({
 			accessToken: newAccessToken,

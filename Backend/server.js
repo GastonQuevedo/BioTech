@@ -17,9 +17,13 @@ const envOptions = {
     confKey: 'config',
     schema: {
         type: 'object',
-        required: ['MONGODB_URI'],
+        required: ['PORT', 'MONGODB_URI', 'JWT_SECRET', 'JWT_EXPIRATION', 'JWT_REFRESH_EXPIRATION'],
         properties: {
-            MONGODB_URI: { type: 'string' }
+            PORT: {type: 'number' },
+            MONGODB_URI: { type: 'string' },
+            JWT_SECRET: { type: 'string' },
+            JWT_EXPIRATION: { type: 'number' },
+            JWT_REFRESH_EXPIRATION: { type: 'number' }
         }
     },
     dotenv: true
@@ -61,10 +65,10 @@ fastify.register(deviceRoutes, { prefix: '/api/devices' })
 fastify.register(authRoutes, { prefix: '/api/auth' })
 
 // set port, listen for requests
-const PORT = process.env.PORT || 8030
-fastify.listen({port: PORT}, (err) => {
+//const PORT = process.env.PORT || 8030
+fastify.listen({port: process.env.PORT}, (err) => {
     if (err) throw err
-    console.log(`Server is running on port ${PORT}.`)
+    console.log(`Server is running on port ${process.env.PORT}.`)
 });
 
 async function initializeRoles() {

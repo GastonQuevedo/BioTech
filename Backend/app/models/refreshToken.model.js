@@ -1,6 +1,5 @@
 const mongoose = require('mongoose')
-const config = require("../config/auth.config")
-const { v4: uuidv4 } = require("uuid")
+const { v4: uuidv4 } = require('uuid')
 
 const RefreshTokenSchema = new mongoose.Schema({
     token: String,
@@ -14,7 +13,7 @@ const RefreshTokenSchema = new mongoose.Schema({
 RefreshTokenSchema.statics.createToken = async function (user) {
     let expiredAt = new Date()
     expiredAt.setSeconds(
-        expiredAt.getSeconds() + config.jwtRefreshExpiration
+        expiredAt.getSeconds() + process.env.JWT_REFRESH_EXPIRATION
     )
     let _token = uuidv4()
     let _object = new this({
