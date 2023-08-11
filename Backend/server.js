@@ -1,13 +1,19 @@
 const fastify = require('fastify')({ logger: true })
 const fastifyEnv = require('@fastify/env')
 const fastifyCors = require('@fastify/cors')
+const fastifyPassport = require('@fastify/passport')
+//const fastifySecureSession = require('@fastify/secure-session')
+const fastifyCookie = require("@fastify/cookie")
+const fastifySession = require("@fastify/session")
+const GoogleStrategy = require('passport-google-oauth2').Strategy
 const mongoose = require('mongoose')
 const dotenv = require("dotenv")
+var bcrypt = require("bcryptjs")
+const User = require('./app/models/user.model')
 const Role = require('./app/models/role.model')
 const userRoutes = require('./app/routes/user.routes')
 const authRoutes = require('./app/routes/auth.routes')
 const deviceRoutes = require('./app/routes/device.routes')
-//const app = fastify()
 
 // Load environment variables if needed
 dotenv.config()
@@ -32,11 +38,62 @@ const envOptions = {
 // Register the fastify-env plugin
 fastify.register(fastifyEnv, envOptions)
 
-// Configure fastify-mongodb
-/*fastify.register(fastifyMongoDB, {
-    forceClose: true,
-    url: process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/mydb', // Set your MongoDB connection URI or use a default value
+// Register the fastify secure session plugin
+/*fastify.register(fastifySecureSession, {
+    key: fs.readFileSync(path.join(__dirname, '.secretKey')),
+    cookie: {
+        path: '/'
+    }
 })*/
+
+// Register fastify cookie and session plugin
+fastify.register(fastifyCookie)
+fastify.register(fastifySession, {
+    secret: process.env.JWT_SECRET, // secret must have length 32 or greater
+    cookie: { secure: false },
+    expires: 1800000
+})
+
+// Register the fastify passport plugin, initialize it and connect it to a secure session
+fastify.register(fastifyPassport.initialize())
+fastify.register(fastifyPassport.secureSession())
+
+// Register the strategy to authenticate
+fastifyPassport.use('google', new GoogleStrategy({
+    clientID: process.env.GOOGLE_CLIENT_ID,
+    clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+    callbackURL: "http://localhost:8030/api/auth/google/callback"
+}, async function verify(accessToken, refreshToken, profile, cb) {
+    try {
+        console.log(profile)
+        const name = profile.displayName
+        const email = profile.email
+        const password = Math.random().toString(36).slice(-8)
+        const existingUser = await User.findOne({ googleId: profile.id})
+        if (existingUser) {
+            console.log("user is: " + existingUser)
+            cb(undefined, existingUser)
+            return
+        }
+        const user = new User({
+            name,
+            email,
+            password: bcrypt.hashSync(password, 8),
+            googleId: profile.id
+        })
+        const role = await Role.findOne({ name: "user" })
+        user.roles = [role._id]
+        await user.save()
+        console.log("new user saved: " + user)
+        cb(undefined, user)
+    } catch (error) {
+        console.log("error: " + error)
+    }
+}))
+fastifyPassport.registerUserSerializer(async(user, request) => user.id)
+fastifyPassport.registerUserDeserializer(async(id, request) => {
+    return await User.findById(id)
+})
 
 // Configure the db with mongoose
 mongoose
@@ -57,12 +114,13 @@ fastify.register(fastifyCors, {
 
 // simple route
 fastify.get("/", (req, reply) => {
-    reply.send({ message: "Welcome to the backend." })
+    reply.send({ message: `Welcome to the backend ${req.user.name} & ${req.user.email}.` })
 })
 // routes
 fastify.register(userRoutes, { prefix: '/api/users' })
 fastify.register(deviceRoutes, { prefix: '/api/devices' })
-fastify.register(authRoutes, { prefix: '/api/auth' })
+fastify.register(authRoutes.manual, { prefix: '/api/auth' })
+fastify.register(authRoutes.google, { prefix: '/api/auth' })
 
 // set port, listen for requests
 //const PORT = process.env.PORT || 8030

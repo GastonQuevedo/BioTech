@@ -72,7 +72,18 @@ async function refreshToken (req, reply) {
 	}
 }
 
+async function callback (req, reply) {
+	reply.redirect("/")
+}
+
+async function logout (req, reply) {
+	req.logout()
+	return {success:true}
+}
+
 module.exports = {
 	signin,
-	refreshToken
+	refreshToken,
+	callback,
+	logout
 }

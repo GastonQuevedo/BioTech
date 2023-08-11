@@ -16,12 +16,14 @@ const userSchema = new mongoose.Schema({
     },
     rut: {
         type: String,
-        required: true,
+        required: false,
+        default: '',
         unique: true,
     },
     position: {
         type: String,
-        required: true,
+        required: false,
+        default: '',
     },
     state: {
         type: Boolean,
@@ -33,6 +35,10 @@ const userSchema = new mongoose.Schema({
             ref: 'Role',
         },
     ],
+    googleId: {
+        type: String,
+        required: false,
+    }
 })
 
 module.exports = mongoose.model('User', userSchema)
