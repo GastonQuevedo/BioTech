@@ -6,7 +6,7 @@ async function getDevices (request, reply) {
         const devices = await Device.find()
         reply.status(200).send(devices)
     } catch (error) {
-        reply.status(500).send('Server error')
+        reply.status(500).send(error)
     }
 }
 
@@ -19,9 +19,9 @@ async function getDeviceById (request, reply) {
             reply.status(404).send('Device not found')
             return
         }
-        reply.status(200).send(note)
+        reply.status(200).send(device)
     } catch (error) {
-        reply.status(500).send('Server error')
+        reply.status(500).send(error)
     }
 }
 
@@ -43,7 +43,7 @@ async function createDevice(request, reply){
         await device.save()
         reply.status(201).send(device)
     } catch (error) {
-        reply.status(500).send('Server error')
+        reply.status(500).send(error)
     }
 }
 
@@ -60,7 +60,7 @@ async function updateDevice (request, reply) {
         const deviceToUpdate = await Device.findById(deviceId)
         reply.status(200).send(deviceToUpdate)
     } catch (error) {
-        reply.status(500).send('Server error')
+        reply.status(500).send(error)
     }
 }
 
@@ -75,7 +75,7 @@ async function deleteDevice (request, reply) {
         }
         reply.status(200).send('Device deleted successfully')
     } catch (error) {
-        reply.status(500).send('Server error')
+        reply.status(500).send(error)
     }
 }
 

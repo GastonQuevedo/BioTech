@@ -23,13 +23,17 @@ const envOptions = {
     confKey: 'config',
     schema: {
         type: 'object',
-        required: ['PORT', 'MONGODB_URI', 'JWT_SECRET', 'JWT_EXPIRATION', 'JWT_REFRESH_EXPIRATION'],
+        required: ['PORT', 'MONGODB_URI', 'JWT_SECRET', 'JWT_EXPIRATION', 'JWT_REFRESH_EXPIRATION', 'GOOGLE_CLIENT_ID', 'GOOGLE_CLIENT_SECRET', 'BACK_URL', 'FRONT_URL'],
         properties: {
             PORT: {type: 'number' },
             MONGODB_URI: { type: 'string' },
             JWT_SECRET: { type: 'string' },
             JWT_EXPIRATION: { type: 'number' },
-            JWT_REFRESH_EXPIRATION: { type: 'number' }
+            JWT_REFRESH_EXPIRATION: { type: 'number' },
+            GOOGLE_CLIENT_ID: { type: 'string' },
+            GOOGLE_CLIENT_SECRET: { type: 'string' },
+            BACK_URL: { type: 'string' },
+            FRONT_URL: { type: 'string' }
         }
     },
     dotenv: true
@@ -62,7 +66,7 @@ fastify.register(fastifyPassport.secureSession())
 fastifyPassport.use('google', new GoogleStrategy({
     clientID: process.env.GOOGLE_CLIENT_ID,
     clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-    callbackURL: "http://localhost:8030/api/auth/google/callback"
+    callbackURL: `${process.env.BACK_URL}/api/auth/google/callback`
 }, async function verify(accessToken, refreshToken, profile, cb) {
     try {
         console.log(profile)
@@ -109,7 +113,7 @@ mongoose
 
 // Configure fastify-cors
 fastify.register(fastifyCors, {
-    origin: "http://localhost:3000", // Set the allowed origin(s) or use '*' to allow all origins
+    origin: process.env.FRONT_URL, // Set the allowed origin(s) or use '*' to allow all origins
 })
 
 // simple route
@@ -123,7 +127,6 @@ fastify.register(authRoutes.manual, { prefix: '/api/auth' })
 fastify.register(authRoutes.google, { prefix: '/api/auth' })
 
 // set port, listen for requests
-//const PORT = process.env.PORT || 8030
 fastify.listen({port: process.env.PORT}, (err) => {
     if (err) throw err
     console.log(`Server is running on port ${process.env.PORT}.`)

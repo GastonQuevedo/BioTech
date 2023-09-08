@@ -73,7 +73,7 @@ async function refreshToken (req, reply) {
 }
 
 async function callback (req, reply) {
-	reply.redirect("/")
+	reply.redirect(process.env.FRONT_URL)
 }
 
 async function logout (req, reply) {
