@@ -8,12 +8,13 @@ async function manual(fastify, options, done) {
 }
 
 async function google(fastify, options, done) {
-    fastify.get("/google/callback", // "google/callback"
+    fastify.get("/google/callback",
         {preValidation: fastifyPassport.authenticate('google',{scope:['profile', 'email']})},
         authController.callback
     )
     fastify.get("/login", fastifyPassport.authenticate('google', {scope: ['profile', 'email']}))
     fastify.get("/logout", authController.logout)
+    fastify.get("/user", authController.getDataUser)
 }
 
 module.exports = {

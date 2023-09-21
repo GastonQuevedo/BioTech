@@ -78,12 +78,17 @@ async function callback (req, reply) {
 
 async function logout (req, reply) {
 	req.logout()
-	return {success:true}
+	reply.redirect(process.env.FRONT_URL)
+}
+
+async function getDataUser (req, reply) {
+	reply.send({ user: req.user })
 }
 
 module.exports = {
 	signin,
 	refreshToken,
 	callback,
-	logout
+	logout,
+	getDataUser
 }

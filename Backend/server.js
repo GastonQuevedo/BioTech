@@ -117,8 +117,12 @@ fastify.register(fastifyCors, {
 })
 
 // simple route
-fastify.get("/", (req, reply) => {
-    reply.send({ message: `Welcome to the backend ${req.user.name} & ${req.user.email}.` })
+fastify.get("/", async function (req, reply) {
+    if(req.user) {
+        const user = await User.findOne({ email: req.user.email }).populate("roles", "-__v")
+        reply.send({ message: `Welcome to the backend ${req.user.name} & ${req.user.email}. ${user.roles[0].name}` })
+    } else
+        reply.send({ message: `Welcome to the backend.` })
 })
 // routes
 fastify.register(userRoutes, { prefix: '/api/users' })

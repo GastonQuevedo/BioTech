@@ -5,8 +5,17 @@ var bcrypt = require("bcryptjs")
 // Get a list of users
 async function getUsers(request, reply) {
     try {
-        const users = await User.find().populate('roles')
-        reply.status(200).send(users)
+        if (request.user) {
+            const myUser = await User.findOne({ email: request.user.email }).populate("roles", "-__v")
+            if (myUser.roles[0].name == "admin") {
+                const users = await User.find().populate('roles')
+                reply.status(200).send(users)
+            } else {
+                reply.status(403).send({ message: "You do not have permission to access this resource." })
+            }
+        } else {
+            reply.status(401).send({ message: "Access denied due to invalid credentials." })
+        }
     } catch (error) {
         reply.status(500).send(error)
     }
@@ -15,13 +24,22 @@ async function getUsers(request, reply) {
 // Get a single user by ID
 async function getUserById(request, reply) {
     try {
-        const userId = request.params.id
-        const user = await User.findById(userId).populate('roles')
-        if (!user) {
-            reply.status(404).send('User not found')
-            return
+        if (request.user) {
+            const myUser = await User.findOne({ email: request.user.email }).populate("roles", "-__v")
+            if (myUser.roles[0].name == "admin") {
+                const userId = request.params.id
+                const user = await User.findById(userId).populate('roles')
+                if (!user) {
+                    reply.status(404).send({ message: "User not found." })
+                    return
+                }
+                reply.status(200).send(user)
+            } else {
+                reply.status(403).send({ message: "You do not have permission to access this resource." })
+            }
+        } else {
+            reply.status(401).send({ message: "Access denied due to invalid credentials." })
         }
-        reply.status(200).send(user)
     } catch (error) {
         reply.status(500).send(error)
     }
@@ -33,7 +51,7 @@ async function createUser(request, reply) {
         const { name, email, password, rut, position } = request.body
         const existingUser = await User.findOne({ email })
         if (existingUser) {
-            reply.status(400).send('Email already exists')
+            reply.status(400).send({ message: "Email already exists" })
             return
         }
         const user = new User({
@@ -60,15 +78,19 @@ async function createUser(request, reply) {
 // Update an existing user
 async function updateUser(request, reply) {
     try {
-        const updates = request.body
-        const userId = request.params.id
-        const user = await User.findByIdAndUpdate(userId, updates)
-        if (!user) {
-            reply.status(404).send('User not found')
-            return
+        if (request.user) {
+            const updates = request.body
+            const userId = request.params.id
+            const user = await User.findByIdAndUpdate(userId, updates)
+            if (!user) {
+                reply.status(404).send({ message: "User not found" })
+                return
+            }
+            const userToUpdate = await User.findById(userId)
+            reply.status(200).send(userToUpdate)
+        } else {
+            reply.status(401).send({ message: "Access denied due to invalid credentials." })
         }
-        const userToUpdate = await User.findById(userId)
-        reply.status(200).send(userToUpdate)
     } catch (error) {
         reply.status(500).send(error)
     }
@@ -77,13 +99,22 @@ async function updateUser(request, reply) {
 // Delete an existing user
 async function deleteUser(request, reply) {
     try {
-        const userId = request.params.id
-        const user = await User.findByIdAndRemove(userId)
-        if (!user) {
-            reply.status(404).send('User not found')
-            return
+        if (request.user) {
+            const myUser = await User.findOne({ email: request.user.email }).populate("roles", "-__v")
+            if (myUser.roles[0].name == "admin") {
+                const userId = request.params.id
+                const user = await User.findByIdAndRemove(userId)
+                if (!user) {
+                    reply.status(404).send({ message: "User not found" })
+                    return
+                }
+                reply.status(200).send({ message: "User deleted successfully" })
+            } else {
+                reply.status(403).send({ message: "You do not have permission to access this resource." })
+            }
+        } else {
+            reply.status(401).send({ message: "Access denied due to invalid credentials." })
         }
-        reply.status(200).send('User deleted successfully')
     } catch (error) {
         reply.status(500).send(error)
     }
@@ -92,13 +123,22 @@ async function deleteUser(request, reply) {
 // Get a list of users that contain the name/email/rut searched
 async function searchUsers(request, reply) {
     try {
-        var nameRegex = {"$regex": new RegExp('^' + request.params.name.toLowerCase(),  'i')}
-        const users = await User.find({$or: [
-            { name: nameRegex },
-            { email: nameRegex },
-            { rut: nameRegex }
-        ]})
-        reply.status(200).send(users)
+        if (request.user) {
+            const myUser = await User.findOne({ email: request.user.email }).populate("roles", "-__v")
+            if (myUser.roles[0].name == "admin") {
+                var nameRegex = {"$regex": new RegExp('^' + request.params.name.toLowerCase(),  'i')}
+                const users = await User.find({$or: [
+                    { name: nameRegex },
+                    { email: nameRegex },
+                    { rut: nameRegex }
+                ]})
+                reply.status(200).send(users)
+            } else {
+                reply.status(403).send({ message: "You do not have permission to access this resource." })
+            }
+        } else {
+            reply.status(401).send({ message: "Access denied due to invalid credentials." })
+        }
     } catch (error) {
         reply.status(500).send(error)
     }
@@ -107,14 +147,23 @@ async function searchUsers(request, reply) {
 // Change the state of an existing user
 async function updateUserState(request, reply) {
     try {
-        const userId = request.params.id
-        const user = await User.findByIdAndUpdate(userId, [{$set:{state:{$eq:[false,"$state"]}}}])
-    if (!user) {
-        reply.status(404).send('User not found')
-        return
-    }
-    const userToUpdate = await User.findById(userId)
-    reply.status(200).send(userToUpdate)
+        if (request.user) {
+            const myUser = await User.findOne({ email: request.user.email }).populate("roles", "-__v")
+            if (myUser.roles[0].name == "admin") {
+                const userId = request.params.id
+                const user = await User.findByIdAndUpdate(userId, [{$set:{state:{$eq:[false,"$state"]}}}])
+                if (!user) {
+                    reply.status(404).send({ message: "User not found" })
+                    return
+                }
+                const userToUpdate = await User.findById(userId)
+                reply.status(200).send(userToUpdate)
+            } else {
+                reply.status(403).send({ message: "You do not have permission to access this resource." })
+            }
+        } else {
+            reply.status(401).send({ message: "Access denied due to invalid credentials." })
+        }
     } catch (error) {
         reply.status(500).send(error)
     }
