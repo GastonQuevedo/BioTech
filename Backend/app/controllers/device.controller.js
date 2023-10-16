@@ -1,4 +1,7 @@
 const Device = require('../models/device.model').device
+const User = require('../models/user.model')
+const Room = require('../models/room.model')
+const roomController = require('./room.controller')
 
 /** if (request.user) {
     const myUser = await User.findOne({ email: request.user.email }).populate("roles", "-__v")
@@ -39,7 +42,7 @@ async function getDeviceById (request, reply) {
                 const deviceId = request.params.id
                 const device = await Device.findById(deviceId)
                 if (!device) {
-                    reply.status(404).send({ message: "Device not found" })
+                    reply.status(404).send({ message: "Device not found." })
                     return
                 }
                 reply.status(200).send(device)
@@ -63,7 +66,7 @@ async function createDevice(request, reply){
                 const { name, model, ipDirection, location } = request.body
                 const existingDevice = await Device.findOne({ ipDirection })
                 if (existingDevice) {
-                    reply.status(400).send({ message: "Device already exists" })
+                    reply.status(400).send({ message: "Device already exists." })
                     return
                 }
                 const device = new Device({
@@ -73,6 +76,8 @@ async function createDevice(request, reply){
                     location,
                 })
                 await device.save()
+                const rooms = await Room.find()
+                roomController.createRoom(rooms.length+1, device)
                 reply.status(201).send(device)
             } else {
                 reply.status(403).send({ message: "You do not have permission to access this resource." })
@@ -95,7 +100,7 @@ async function updateDevice (request, reply) {
                 const deviceId = request.params.id
                 const device = await Device.findByIdAndUpdate(deviceId, updates)
                 if (!device) {
-                    reply.status(404).send({ message: "Device not found" })
+                    reply.status(404).send({ message: "Device not found." })
                     return
                 }
                 const deviceToUpdate = await Device.findById(deviceId)
@@ -119,11 +124,12 @@ async function deleteDevice (request, reply) {
             if (myUser.roles[0].name == "admin") {
                 const deviceId = request.params.id
                 const device = await Device.findByIdAndRemove(deviceId)
-                if (!device) {
-                    reply.status(404).send({ message: "Device not found" })
+                const room = await Room.findOneAndDelete({ device: device })
+                if (!device || !room) {
+                    reply.status(404).send({ message: "Device/Room not found." })
                     return
                 }
-                reply.status(200).send({ message: "Device deleted successfully" })
+                reply.status(200).send({ message: "Device and Room deleted successfully." })
             } else {
                 reply.status(403).send({ message: "You do not have permission to access this resource." })
             }

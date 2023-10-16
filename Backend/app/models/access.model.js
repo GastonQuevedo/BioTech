@@ -3,7 +3,8 @@ const mongoose = require('mongoose')
 const accessSchema = new mongoose.Schema({
     createdAt: {
         type: Date,
-        required: true
+        required: true,
+        default: Date.now()
     },
     entry:{
         type: Boolean,

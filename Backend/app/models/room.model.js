@@ -1,5 +1,5 @@
 const mongoose = require('mongoose')
-const DeviceSchema = require("./device.model").DeviceSchema
+const DeviceSchema = require("./device.model").deviceSchema
 
 const roomSchema = new mongoose.Schema({
     name:{
@@ -15,6 +15,12 @@ const roomSchema = new mongoose.Schema({
         {
             type: mongoose.Schema.Types.ObjectId,
             ref: 'Access'
+        }
+    ],
+    message: [
+        {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Message'
         }
     ]
 })

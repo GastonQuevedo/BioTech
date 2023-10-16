@@ -51,7 +51,7 @@ async function createUser(request, reply) {
         const { name, email, password, rut, position } = request.body
         const existingUser = await User.findOne({ email })
         if (existingUser) {
-            reply.status(400).send({ message: "Email already exists" })
+            reply.status(400).send({ message: "Email already exists." })
             return
         }
         const user = new User({
@@ -83,7 +83,7 @@ async function updateUser(request, reply) {
             const userId = request.params.id
             const user = await User.findByIdAndUpdate(userId, updates)
             if (!user) {
-                reply.status(404).send({ message: "User not found" })
+                reply.status(404).send({ message: "User not found." })
                 return
             }
             const userToUpdate = await User.findById(userId)
@@ -105,10 +105,10 @@ async function deleteUser(request, reply) {
                 const userId = request.params.id
                 const user = await User.findByIdAndRemove(userId)
                 if (!user) {
-                    reply.status(404).send({ message: "User not found" })
+                    reply.status(404).send({ message: "User not found." })
                     return
                 }
-                reply.status(200).send({ message: "User deleted successfully" })
+                reply.status(200).send({ message: "User deleted successfully." })
             } else {
                 reply.status(403).send({ message: "You do not have permission to access this resource." })
             }
@@ -153,7 +153,7 @@ async function updateUserState(request, reply) {
                 const userId = request.params.id
                 const user = await User.findByIdAndUpdate(userId, [{$set:{state:{$eq:[false,"$state"]}}}])
                 if (!user) {
-                    reply.status(404).send({ message: "User not found" })
+                    reply.status(404).send({ message: "User not found." })
                     return
                 }
                 const userToUpdate = await User.findById(userId)

@@ -11,7 +11,8 @@ const deviceSchema = new mongoose.Schema({
     },
     ipDirection: {
         type: String,
-        required: true
+        required: true,
+        unique: true
     },
     location: {
         type: String,

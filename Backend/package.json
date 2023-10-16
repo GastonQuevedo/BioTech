@@ -29,11 +29,13 @@
     "fastify": "^4.22.2",
     "fastify-cli": "^5.8.0",
     "fastify-jwt": "^4.2.0",
+    "fastify-socket.io": "^5.0.0",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^7.5.0",
     "passport-google-oauth2": "^0.2.0",
     "pg": "^8.11.3",
     "pg-hstore": "^2.3.4",
+    "socket.io": "^4.7.2",
     "uuid": "^9.0.0"
   }
 }
